@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "okx-qqsm-bot"
+version = "0.1.0"
+description = ""
+authors = ["AKeNForcer <nonlnw62543@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "^2.1.0"
+pandas = "^2.2.2"
+python-dotenv = "^1.0.1"
+apscheduler = "^3.10.4"
+scipy = "^1.14.1"
+ccxt = "^4.3.95"
+pymongo = {extras = ["srv"], version = "^4.8.0"}
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
