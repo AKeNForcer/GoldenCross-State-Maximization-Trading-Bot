@@ -4,6 +4,8 @@ from src.core.logger import logger, MongoDBHandler
 from src.core.db import State
 from src.strategy.rebalance import RebalanceSingleStrategy
 from src.signal.rebalance.golden_cross import GoldenCross
+from src.signal.rebalance.qqsm import QuantizedQuantileStateMaximization
+from traceback import format_exc
 
 
 
@@ -17,16 +19,21 @@ if mongo_client:
 
 
 def main():
-    signal = GoldenCross(INDICATOR_CONFIG)
-    strategy = RebalanceSingleStrategy(ex=ex,
-                                       symbol=SYMBOL,
-                                       timeframe=TIMEFRAME,
-                                       fraction=signal,
-                                       live=LIVE_TRADE)
-    state = State(db)
-    controller = Controller(TICK_SCHEDULE,
-                            { 'strategy': strategy },
-                            state)
+    try:
+        signal = QuantizedQuantileStateMaximization(INDICATOR_CONFIG)
+        # signal = GoldenCross(INDICATOR_CONFIG)
+        strategy = RebalanceSingleStrategy(ex=ex,
+                                        symbol=SYMBOL,
+                                        timeframe=TIMEFRAME,
+                                        fraction=signal,
+                                        live=LIVE_TRADE)
+        state = State(db)
+        controller = Controller(TICK_SCHEDULE,
+                                { 'strategy': strategy },
+                                state)
+    except Exception as e:
+        logger.error(format_exc())
+        raise e
     controller.start()
 
 

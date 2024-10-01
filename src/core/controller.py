@@ -1,3 +1,4 @@
+from traceback import format_exc
 from apscheduler.schedulers.blocking import BlockingScheduler
 from src.core.logger import logger
 from src.core.db import State, StateInjectable
@@ -41,25 +42,36 @@ class Controller:
             for name, module in self.modules.items():
                 module.inject_state(state.sub_state(name))
     
+    def _handle_error(self, e):
+        tb = format_exc()
+        logger.error(tb)
+
     def tick(self):
-        now = datetime.now()
-        payloads = []
-        logger.info('==================== tick start ====================')
-        for name, module in self.modules.items():
-            logger.info(f'====== module: {name} ==========')
-            payloads.append(module.tick(now))
-        logger.info('==================== tick done ====================')
-        for (name, module), payload in zip(self.modules.items(), payloads):
-            logger.info(f'====== module: {name} ==========')
-            module.post_tick(now, payload)
-        logger.info('==================== post tick done ====================')
-        if self.state:
-            self.state.save(now)
-        logger.info('==================== state saved ====================')
+        try:
+            now = datetime.now()
+            payloads = []
+            logger.info('==================== tick start ====================')
+            for name, module in self.modules.items():
+                logger.info(f'====== module: {name} ==========')
+                payloads.append(module.tick(now))
+            logger.info('==================== tick done ====================')
+            for (name, module), payload in zip(self.modules.items(), payloads):
+                logger.info(f'====== module: {name} ==========')
+                module.post_tick(now, payload)
+            logger.info('==================== post tick done ====================')
+        except Exception as e:
+            self._handle_error(e)
+        finally:
+            if self.state:
+                self.state.save(now)
+            logger.info('==================== state saved ====================')
     
     def start(self):
-        for i in range(10):
-            logger.info(f'Starting in {10 - i} seconds')
-            sleep(1)
-        logger.info('==================== start running ====================')
-        self.scheduler.start()
+        try:
+            for i in range(10):
+                logger.info(f'Starting in {10 - i} seconds')
+                sleep(1)
+            logger.info('==================== start running ====================')
+            self.scheduler.start()
+        except Exception as e:
+            self._handle_error(e)

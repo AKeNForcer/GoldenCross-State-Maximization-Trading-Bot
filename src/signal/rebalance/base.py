@@ -7,5 +7,5 @@ class RebalanceSignal(BaseSignal):
     def __init__(self) -> None:
         super().__init__()
     
-    def get(self, now: datetime, data: pd.DataFrame) -> float:
-        raise NotImplementedError()
+    def inject_strategy(self, strategy):
+        self.strategy = strategy

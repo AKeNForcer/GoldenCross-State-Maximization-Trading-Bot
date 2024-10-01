@@ -199,6 +199,7 @@ class State:
             key_refs.append((path, _key_refs))
 
             obj = {}
+            obj["__save_from__"] = self.abs_path
             if key is not None:
                 obj["__key__"] = key
 

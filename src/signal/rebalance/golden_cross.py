@@ -31,7 +31,7 @@ class GoldenCross(RebalanceSignal):
         return self.buffer
 
 
-    def get(self, now: datetime, data: DataFrame) -> tuple[float, dict]:
+    def tick(self, now: datetime, data: DataFrame) -> float:
         data = data.copy()
         for p in self.period:
             data[f'ema_{p}'] = data['close'].ewm(span=p).mean()

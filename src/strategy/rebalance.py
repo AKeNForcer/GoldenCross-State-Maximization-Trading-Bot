@@ -1,9 +1,7 @@
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 from ccxt import Exchange
-from pymongo.database import Database
-from src.core.controller import Syncronizable
 from src.core.db import State
 from src.strategy.base import BaseStrategy
 from src.core.data import DataBroker
@@ -51,40 +49,47 @@ class RebalanceSingleStrategy(BaseStrategy):
         super().inject_state(state)
         self.state.load('tick')
         self.fraction.inject_state(state.sub_state('signal'))
+        self.fraction.inject_strategy(self)
     
 
-    def _rebalance(self, now: datetime, frac: float, last_price: float):
-        balance = self.ex.fetch_balance()['total']
-        quote_bal = balance.get(self.quote) or 0
-        base_bal = balance.get(self.base) or 0
-        equity = quote_bal + base_bal * last_price
-        quote_invest = equity * frac
-        base_invest = quote_invest / last_price
+    def _fetch_account_balance(self):
+        self.last_price = self.data.iloc[-1]['close']
+        self.balance = self.ex.fetch_balance()['total']
+        self.quote_bal = self.balance.get(self.quote) or 0
+        self.base_bal = self.balance.get(self.base) or 0
+        self.equity = self.quote_bal + self.base_bal * self.last_price
 
-        diff_base = calc_precision(base_invest - base_bal,
-                                    self.base_precision,
-                                    np.floor)
+
+    def _rebalance(self, now: datetime, frac: float):
+        quote_invest = self.equity * frac
+        base_invest = quote_invest / self.last_price
+
+        diff_base = calc_precision(base_invest - self.base_bal,
+                                   self.base_precision,
+                                   np.floor)
         if np.abs(diff_base) < self.min_trade_base:
             diff_base = 0
         
         
+        response = dict(
+            time=now,
+            fraction=frac,
+            quote_bal=self.quote_bal,
+            base_bal=self.base_bal,
+            equity=self.equity,
+            quote_invest=quote_invest,
+            base_invest=base_invest,
+            diff_base=diff_base,
+            side=None,
+            final_quote_bal=self.quote_bal,
+            final_base_bal=self.base_bal,
+            final_equity=self.equity,
+            traded=False,
+            order=None
+        )
+
         if diff_base == 0:
-            return dict(
-                time=now,
-                fraction=frac,
-                quote_bal=quote_bal,
-                base_bal=base_bal,
-                equity=equity,
-                quote_invest=quote_invest,
-                base_invest=base_invest,
-                diff_base=diff_base,
-                side=None,
-                final_quote_bal=quote_bal,
-                final_base_bal=base_bal,
-                final_equity=equity,
-                traded=False,
-                order=None
-            )
+            return response
 
         side = 'buy' if diff_base > 0 else 'sell'
         diff_base = np.abs(diff_base)
@@ -109,44 +114,44 @@ class RebalanceSingleStrategy(BaseStrategy):
         else:
             res = None
         
-        final_balance = self.ex.fetch_balance()['total']
-        final_quote_bal = final_balance.get(self.quote) or 0
-        final_base_bal = final_balance.get(self.base) or 0
+        old_equity = self.equity
+        self._fetch_account_balance()
+        
+        response['final_quote_bal'] = self.quote_bal
+        response['final_base_bal'] = self.base_bal
+        response['final_equity'] = \
+            self.quote_bal + self.base_bal * res['price'] if res else old_equity
+        response['traded'] = res is not None
+        response['order'] = res
+        
+        return response
 
-        return dict(
-            time=now,
-            fraction=frac,
-            base_bal=base_bal,
-            quote_bal=quote_bal,
-            equity=equity,
-            base_invest=base_invest,
-            quote_invest=quote_invest,
-            diff_base=diff_base,
-            side=side,
-            final_quote_bal=final_quote_bal,
-            final_base_bal=final_base_bal,
-            final_equity=final_quote_bal + \
-                final_base_bal * res['price'] \
-                    if res else equity,
-            traded=res is not None,
-            order=res
-        )
 
+    def get_current_kline(self):
+        return self.dt.get(1)
+    
+
+    def get_klines(self, limit=None):
+        return self.dt.get(last=datetime.now() - self.tfdelta, limit=limit)
 
 
     def tick(self, now: datetime):
         if type(self.fraction) == float:
-            data = self.dt.get(1)
-            self._rebalance(now, self.fraction, data.iloc[-1]['close'])
+            self.data = self.get_current_kline()
+            self._fetch_account_balance()
+
+            self._rebalance(now, self.fraction, self.last_price)
             return
 
         limit = self.fraction.get_length()
         if type(limit) != int:
             limit = int(limit / self.tfdelta)
-        data = self.dt.get(last=datetime.now() - self.tfdelta, limit=limit)
 
-        frac = self.fraction.get(now, data)
-        res = self._rebalance(now, frac, data.iloc[-1]['close'])
+        self.data = self.get_klines(limit=limit)
+        self._fetch_account_balance()
+
+        frac = self.fraction.tick(now, self.data)
+        res = self._rebalance(now, frac)
 
         return frac, res
     
@@ -159,10 +164,14 @@ class RebalanceSingleStrategy(BaseStrategy):
             self.state['tick'] = res
         
         logger.info('rebalance done')
+        logger.info(f'kline start: {self.data.index[0]}')
+        logger.info(f'kline end: {self.data.index[-1]}')
         logger.info(f'fraction: {frac}')
         logger.info(f'diff_base: {res["diff_base"]}')
         logger.info(f'final_base_bal: {res["final_base_bal"]}')
         logger.info(f'final_quote_bal: {res["final_quote_bal"]}')
         logger.info(f'final_equity: {res["final_equity"]}')
         logger.info(f'traded: {res["traded"]}')
+
+        self.fraction.post_tick(now)
 
