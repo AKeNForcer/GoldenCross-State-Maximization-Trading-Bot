@@ -111,8 +111,8 @@ class GetWeightFn:
 
             w = maximize_return_points(
                 ret,
-                # fee=self.fee * fee_adj,
-                # prev=prev_w
+                fee=self.fee * fee_adj,
+                prev=prev_w
             )
             weight.loc[idx] = w
             prev_w = w

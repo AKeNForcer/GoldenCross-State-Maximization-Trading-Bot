@@ -122,7 +122,12 @@ class DataBroker(Syncronizable):
             _df = self._to_df(_df)
             # print((f'start__={start__} limit__={limit__}', flush=True)
             # print((f'i0={_df.index[0]} i1={_df.index[1]}', flush=True)
-            logger.debug(f'data | klines updated from: {_df.index[0]} to: {_df.index[-1]} ({limit__})')
+            if len(_df) > 0:
+                logger.debug(f'data | klines updated from: {_df.index[0]} to: {_df.index[-1]} ({limit__})')
+            else:
+                logger.warning(f'data | no klines updated ({limit__})')
+                break
+
             df = pd.concat([_df, df])
             limit__ -= len(_df)
 

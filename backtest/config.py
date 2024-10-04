@@ -13,14 +13,17 @@ test_variables = dotenv_values('.env.test')
 
 
 
-test_name = 'test-3'
-DB_NAME = f"{test_variables.get('DB_NAME')}-3"
+test_name = 'test-5'
+DB_NAME = f"{test_variables.get('DB_NAME')}-5"
+# test_name = 'test-5-test'
+# DB_NAME = f"{test_variables.get('DB_NAME')}-5-test"
 
-start_date = pd.to_datetime('2019-01-01')
-end_date = pd.to_datetime('2023-01-01')
+# start_date = pd.to_datetime('2019-01-01')
+# end_date = pd.to_datetime('2023-01-01')
+start_date = pd.to_datetime('2023-01-01')
+end_date = pd.to_datetime('2024-10-01')
 
-fee = 0.1/100
-start_equity = 10_000
+start_equity = 100_000
 
 
 
@@ -46,25 +49,13 @@ INDICATOR_CONFIG = {
     'state_target': ['close'],
     'lookback': [90],
     'qt_length': [90],
-    'qt_steps': [3],
+    'qt_steps': [3, 5],
     'chain_length': [7],
     'forward_length': [3],
-    'fee_adj': [2],
-    'opt_range': 120,
-    'opt_freq': 61
+    'fee_adj': [1.5, 2, 2.5],
+    'opt_range': 365,
+    'opt_freq': 61,
 }
-# INDICATOR_CONFIG = {
-#     'trade_freq': pd.to_timedelta(TIMEFRAME),
-#     'state_target': ['close'],
-#     'lookback': [90],
-#     'qt_length': [90],
-#     'qt_steps': [3, 5],
-#     'chain_length': [7],
-#     'forward_length': [3],
-#     'fee_adj': [1.5, 2, 2.5],
-#     'opt_range': 365,
-#     'opt_freq': 61,
-# }
 
 if DB_CONN:
     mongo_client = pymongo.MongoClient(DB_CONN, server_api=ServerApi('1'))
@@ -78,7 +69,7 @@ else:
     db = None
 
 
-ex = getMockCcxt(ccxt.okx, { 'USDT': 100_000, 'BTC': 0 }, db, {
+ex = getMockCcxt(ccxt.okx, { 'USDT': start_equity, 'BTC': 0 }, db, {
     'apiKey': API_KEY,         # Replace with your actual API key
     'secret': API_SECRET,      # Replace with your actual Secret key
     'password': API_PASS,
