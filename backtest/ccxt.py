@@ -5,6 +5,8 @@ from datetime import datetime
 from pymongo.database import Database
 import pandas as pd
 from src.core.time import current_datetime
+from src.utils.calc import validate_precision
+import numpy as np
 
 
 
@@ -39,6 +41,26 @@ def getMockCcxt(exchangeType: type[ccxt.okx],
                          amount: float,
                          price: None | str | float | int = None,
                          params: Dict[str, Any] = {}):
+            if symbol not in self._market_info:
+                raise ValueError(f'Invalid {symbol=}')
+            if order_type not in ['limit', 'market']:
+                raise ValueError(f'Invalid {order_type=}')    
+            if side not in ['buy', 'sell']:
+                raise ValueError(f'Invalid {side=}')
+            
+            amount_precision = self._market_info[symbol]['precision']['amount']
+            if not validate_precision(amount, amount_precision):
+                raise ValueError(f'Invalid amount precision ({amount=} {amount_precision=})')
+            
+            min_amount = self._market_info[symbol]['limits']['amount']['min']
+            if amount < self._market_info[symbol]['limits']['amount']['min']:
+                raise ValueError(f'{amount=} must be greater than or equal {min_amount}')
+            
+            if price:
+                price_precision = self._market_info[symbol]['precision']['price']
+                if not validate_precision(price, price_precision):
+                    raise ValueError(f'Invalid amount precision ({price=} {price_precision=})')
+
             self.order_id_counter += 1
             order_id = str(self.order_id_counter)
             order = {
@@ -135,7 +157,6 @@ def getMockCcxt(exchangeType: type[ccxt.okx],
                                 pd.to_timedelta(timeframe).total_seconds()))
             res = super().fetch_ohlcv(symbol=symbol, timeframe=timeframe, since=since,
                                       limit=limit, params=params)
-            # print('ex', since, limit, len(res), flush=True)
             return res
 
     return MockCcxt(*args, **kwargs)

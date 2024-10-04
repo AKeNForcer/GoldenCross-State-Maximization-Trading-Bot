@@ -15,15 +15,18 @@ test_variables = dotenv_values('.env.test')
 
 test_name = 'test-5'
 DB_NAME = f"{test_variables.get('DB_NAME')}-5"
+start_date = pd.to_datetime('2019-01-01')
+end_date = pd.to_datetime('2023-01-01')
+
+
 # test_name = 'test-5-test'
 # DB_NAME = f"{test_variables.get('DB_NAME')}-5-test"
+# start_date = pd.to_datetime('2023-01-01')
+# end_date = pd.to_datetime('2024-10-01')
 
-# start_date = pd.to_datetime('2019-01-01')
-# end_date = pd.to_datetime('2023-01-01')
-start_date = pd.to_datetime('2023-01-01')
-end_date = pd.to_datetime('2024-10-01')
 
-start_equity = 100_000
+
+start_equity = 1_000
 
 
 
