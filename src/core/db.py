@@ -1,5 +1,6 @@
 from pymongo.database import Database
 from datetime import datetime
+from src.core.time import current_datetime
 
 
 
@@ -124,11 +125,14 @@ class State:
         if type(paths) != list:
             paths = [paths]
         
-        now = datetime.now()
+        now = current_datetime()
         for path in paths:
             target, path, abs_path = self._get_target_utils(path)
 
-            _res = self.db[abs_path].find().sort("__updated_time__", -1).limit(1)
+            _res = []
+            if self.db is not None:
+                _res = self.db[abs_path].find().sort("__updated_time__", -1).limit(1)
+            
             res = { '__updated_time__': now } if create else None
             for r in _res:
                 res = r
@@ -296,7 +300,7 @@ class State:
         
         if type(value) != dict:
             raise ValueError('value is not a dict')
-        self.store[path] = { '__updated_time__': datetime.now(), **value}
+        self.store[path] = { '__updated_time__': current_datetime(), **value}
         
 
     def __delitem__(self, path: str):

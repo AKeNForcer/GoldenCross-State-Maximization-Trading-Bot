@@ -33,7 +33,7 @@ class MongoDBHandler(logging.Handler):
 
 
 # Create a logger
-logger = logging.getLogger('main_logger')
+logger = logging.getLogger('bot_logger')
 logger.setLevel(logging.DEBUG)
 
 # Create console handler and set level to debug

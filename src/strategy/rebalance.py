@@ -8,6 +8,7 @@ from src.core.data import DataBroker
 from src.signal.rebalance.base import RebalanceSignal
 from src.core.logger import logger
 from src.utils.calc import calc_precision
+from src.core.time import current_datetime
 from time import sleep
 
 
@@ -25,7 +26,7 @@ class RebalanceSingleStrategy(BaseStrategy):
         self.live = live
         self.dt = DataBroker(ex, symbol, timeframe)
         self.symbol = symbol
-        self.market_info = self.ex.load_markets()['BTC/USDT']
+        self.market_info = self.ex.load_markets()[self.symbol]
         self.base = self.market_info['base']
         self.quote = self.market_info['quote']
         self.trading_fee = self.market_info['taker']
@@ -64,9 +65,11 @@ class RebalanceSingleStrategy(BaseStrategy):
         quote_invest = self.equity * frac
         base_invest = quote_invest / self.last_price
 
-        diff_base = calc_precision(base_invest - self.base_bal,
+        diff_base = base_invest - self.base_bal
+        diff_base = calc_precision(diff_base,
                                    self.base_precision,
-                                   np.floor)
+                                   np.floor if diff_base > 0 else np.ceil)
+        
         if np.abs(diff_base) < self.min_trade_base:
             diff_base = 0
         
@@ -119,8 +122,13 @@ class RebalanceSingleStrategy(BaseStrategy):
         
         response['final_quote_bal'] = self.quote_bal
         response['final_base_bal'] = self.base_bal
+        # try:
         response['final_equity'] = \
             self.quote_bal + self.base_bal * res['price'] if res else old_equity
+        # except Exception as e:
+        #     print(res)
+        #     print(self.quote_bal + self.base_bal, res['price'], old_equity)
+        #     raise e
         response['traded'] = res is not None
         response['order'] = res
         
@@ -132,11 +140,11 @@ class RebalanceSingleStrategy(BaseStrategy):
     
 
     def get_klines(self, limit=None):
-        return self.dt.get(last=datetime.now() - self.tfdelta, limit=limit)
+        return self.dt.get(last=current_datetime() - self.tfdelta, limit=limit)
 
 
     def tick(self, now: datetime):
-        if type(self.fraction) == float:
+        if type(self.fraction) in [float, int]:
             self.data = self.get_current_kline()
             self._fetch_account_balance()
 
@@ -165,7 +173,7 @@ class RebalanceSingleStrategy(BaseStrategy):
         
         logger.info('rebalance done')
         logger.info(f'kline start: {self.data.index[0]}')
-        logger.info(f'kline end: {self.data.index[-1]}')
+        logger.info(f'kline last: {self.data.index[-1]}')
         logger.info(f'fraction: {frac}')
         logger.info(f'diff_base: {res["diff_base"]}')
         logger.info(f'final_base_bal: {res["final_base_bal"]}')

@@ -16,10 +16,12 @@ ccxt = "^4.3.95"
 pymongo = {extras = ["srv"], version = "^4.8.0"}
 pydantic = "^2.9.2"
 vectorbt = "^0.26.2"
+freezegun = "^1.5.1"
 
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
+matplotlib = "^3.9.2"
 
 [build-system]
 requires = ["poetry-core"]

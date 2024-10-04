@@ -13,6 +13,7 @@ from src.core.logger import logger
 from src.utils.backtest.runner import weight_trade_with_idx
 from src.utils.backtest.data import make_time_window
 from src.utils.backtest.em_weight import maximize_return_points
+from src.core.time import current_datetime
 
 
 
@@ -108,9 +109,11 @@ class GetWeightFn:
             window = window.loc[w_sel]
             ret = window['ret']
 
-            w = maximize_return_points(ret,
-                                       fee=self.fee * fee_adj,
-                                       prev=prev_w)
+            w = maximize_return_points(
+                ret,
+                # fee=self.fee * fee_adj,
+                # prev=prev_w
+            )
             weight.loc[idx] = w
             prev_w = w
 
@@ -135,8 +138,10 @@ class QuantizedQuantileStateMaximization(RebalanceSignal):
 
         config['buffer'] = \
             config.get('buffer') or \
-                int(max(*config['lookback'], *config['qt_length'],
-                        *config['chain_length'], *config['forward_length']))
+                sum([ max(config[x]) for x in ['lookback', 'qt_length',
+                                               'chain_length', 'forward_length'] ])
+                # int(max(*config['lookback'], *config['qt_length'],
+                #         *config['chain_length'], *config['forward_length']))
         config['save_opt_results'] = config.get('save_opt_results') or False
 
         self.config = QqsmConfig(**config)
@@ -165,7 +170,7 @@ class QuantizedQuantileStateMaximization(RebalanceSignal):
 
 
     def get_length(self) -> int:
-        return int(self.config.buffer + self.state['params']['qt_length'])
+        return int(self.config.buffer)
 
 
 
@@ -224,7 +229,7 @@ class QuantizedQuantileStateMaximization(RebalanceSignal):
     def optimize(self, data: pd.DataFrame, fee: float,
                  now: datetime | None=None, force=False,
                  save=False):
-        now = now or datetime.now()
+        now = now or current_datetime()
         date = self.state['params'].get('date')
         
         if not force and date and \
@@ -283,6 +288,7 @@ class QuantizedQuantileStateMaximization(RebalanceSignal):
         fraction = last['weight']
 
         self.state['state'] = dict(time=now,
+                                   initial_frac=initial_frac,
                                    fraction=fraction,
                                    last={'opentime': last_idx,
                                          **last.to_dict()})
@@ -290,11 +296,11 @@ class QuantizedQuantileStateMaximization(RebalanceSignal):
         return fraction
     
 
-    def post_tick(self, now: datetime) -> float:
-        self.optimize(
-            self.strategy.get_klines(self.config.opt_range),
-            self.strategy.trading_fee,
-            now
-        )
+    # def post_tick(self, now: datetime):
+    #     self.optimize(
+    #         self.strategy.get_klines(self.config.opt_range),
+    #         self.strategy.trading_fee,
+    #         now
+    #     )
 
 

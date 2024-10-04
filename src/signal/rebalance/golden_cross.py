@@ -45,9 +45,12 @@ class GoldenCross(RebalanceSignal):
         last = data.iloc[-1]
         last_idx = data.index[-1]
 
+        cfg = { **self.config }
+        del cfg['trade_freq']
+
         self.state['state'] = dict(time=now,
                                    fraction=last['fraction'],
-                                   config=self.config,
+                                   config=cfg,
                                    last={'opentime': last_idx,
                                          **last.to_dict()})
 

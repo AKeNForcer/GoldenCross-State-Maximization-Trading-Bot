@@ -7,10 +7,12 @@ from pymongo.server_api import ServerApi
 from src.core.timeframe import tf_to_resample
 
 
-LIVE_TRADE = False
-
 
 load_dotenv()
+
+
+LIVE_TRADE = False
+
 
 DB_CONN = os.environ.get('DB_CONN')
 DB_NAME = os.environ.get('DB_NAME')

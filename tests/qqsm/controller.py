@@ -1,33 +1,17 @@
 from traceback import format_exc
 from apscheduler.schedulers.blocking import BlockingScheduler
 from src.core.logger import logger
-from src.core.db import State, StateInjectable
+from src.core.controller import Syncronizable, Controller
+from src.core.db import State
 from src.core.time import current_datetime
 from datetime import datetime
 from time import sleep
 
 
-class Syncronizable(StateInjectable):
-    def tick(self, now: datetime):
-        raise NotImplementedError()
-    
-    def post_tick(self, now: datetime, payload):
-        raise NotImplementedError()
 
 
-
-class SyncFn(Syncronizable):
-    def __init__(self, fn) -> None:
-        self.fn = fn
-        super().__init__()
-    
-    def tick(self, now: datetime):
-        self.fn(now)
-
-
-
-class Controller:
-    def __init__(self, schedule: dict,
+class MockController(Controller):
+    def __init__(self,
                  modules: dict[str, Syncronizable],
                  state: State | None = None):
         if type(modules) != dict:
@@ -35,17 +19,16 @@ class Controller:
         else:
             self.modules = modules
         
-        self.scheduler = BlockingScheduler()
-        self.scheduler.add_job(self.tick, 'cron', **schedule)
         self.state = state
-
+        
         if state:
             for name, module in self.modules.items():
                 module.inject_state(state.sub_state(name))
     
     def _handle_error(self, e):
-        tb = format_exc()
-        logger.error(tb)
+        raise e
+        # tb = format_exc()
+        # logger.error(tb)
 
     def tick(self):
         try:
@@ -66,13 +49,4 @@ class Controller:
             if self.state:
                 self.state.save(now)
             logger.info('==================== state saved ====================')
-    
-    def start(self):
-        try:
-            for i in range(10):
-                logger.info(f'Starting in {10 - i} seconds')
-                sleep(1)
-            logger.info('==================== start running ====================')
-            self.scheduler.start()
-        except Exception as e:
-            self._handle_error(e)
+

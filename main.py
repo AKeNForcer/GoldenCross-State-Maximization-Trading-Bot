@@ -9,16 +9,16 @@ from traceback import format_exc
 
 
 
-if mongo_client:
-    mongo_client.admin.command('ping')
-    mongo_handler = MongoDBHandler(db['log'])
-    logger.addHandler(mongo_handler)
-    logger.info("Database connection OK")
-
 
 
 
 def main():
+    if mongo_client:
+        mongo_client.admin.command('ping')
+        mongo_handler = MongoDBHandler(db['log'])
+        logger.addHandler(mongo_handler)
+        logger.info("Database connection OK")
+
     try:
         signal = QuantizedQuantileStateMaximization(INDICATOR_CONFIG)
         # signal = GoldenCross(INDICATOR_CONFIG)
