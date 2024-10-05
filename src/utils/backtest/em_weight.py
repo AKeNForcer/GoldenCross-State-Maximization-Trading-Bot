@@ -19,6 +19,24 @@ def samples_pdf(samples, bin_width, transform=None):
     return pdf
 
 
+def maximize_return_points_vt(ret, rng=np.arange(0, 1.01, 0.01), fee=0, default=0.5, prev=None):
+    if not prev:
+        prev = 0
+    
+    if len(ret) == 0:
+        if default is not None:
+            return default
+        return prev
+
+    frac = np.repeat([rng], len(ret), axis=0).T
+    ret = np.repeat([ret], len(rng), axis=0)
+
+    score = (np.log(ret * frac + 1 - np.abs((ret + 2) * (frac - prev) * fee))).mean(axis=1)
+
+    return rng[score.argmax()]
+
+
+
 def maximize_return_points(ret, bound=(0.0, 1.0), fee=0, prev=None):
     if prev is None:
         prev = 0
