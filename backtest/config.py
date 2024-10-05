@@ -11,16 +11,16 @@ test_variables = dotenv_values('.env.test')
 
 
 
+test_i = 6
 
-
-test_name = 'test-5'
-DB_NAME = f"{test_variables.get('DB_NAME')}-5"
+test_name = f'test-{test_i}'
+DB_NAME = f"{test_variables.get('DB_NAME')}-{test_i}"
 start_date = pd.to_datetime('2019-01-01')
 end_date = pd.to_datetime('2023-01-01')
 
 
-# test_name = 'test-5-test'
-# DB_NAME = f"{test_variables.get('DB_NAME')}-5-test"
+# test_name = f'test-{test_i}-test'
+# DB_NAME = f"{test_variables.get('DB_NAME')}-{test_i}-test"
 # start_date = pd.to_datetime('2023-01-01')
 # end_date = pd.to_datetime('2024-10-01')
 
@@ -50,14 +50,14 @@ TIMEFRAME = '1d'
 INDICATOR_CONFIG = {
     'trade_freq': pd.to_timedelta(TIMEFRAME),
     'state_target': ['close'],
-    'lookback': [90],
+    'lookback': [60, 75, 90],
     'qt_length': [90],
-    'qt_steps': [3, 5],
+    'qt_steps': [3],
     'chain_length': [7],
     'forward_length': [3],
-    'fee_adj': [1.5, 2, 2.5],
-    'opt_range': 365,
-    'opt_freq': 61,
+    'fee_adj': [1, 1.25, 1.5],
+    'opt_range': 190 + 182,
+    'opt_freq': 91,
 }
 
 if DB_CONN:
