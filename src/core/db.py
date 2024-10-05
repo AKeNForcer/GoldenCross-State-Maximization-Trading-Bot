@@ -118,9 +118,6 @@ class State:
             return
         
         self._validate_db()
-
-        if self.db is None:
-            return
         
         if type(paths) != list:
             paths = [paths]
