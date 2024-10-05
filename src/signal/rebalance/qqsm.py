@@ -12,7 +12,7 @@ from src.strategy.rebalance import RebalanceSingleStrategy
 from src.core.logger import logger
 from src.utils.backtest.runner import weight_trade_with_idx
 from src.utils.backtest.data import make_time_window
-from src.utils.backtest.em_weight import maximize_return_points
+from src.utils.backtest.em_weight import maximize_return_points_vt
 from src.core.time import current_datetime
 
 
@@ -30,7 +30,7 @@ class QqsmConfig(BaseModel):
     qt_steps: List[conint(gt=1)]
     chain_length: List[conint(gt=1)]
     forward_length: List[conint(gt=1)]
-    fee_adj: List[confloat(gt=1)]
+    fee_adj: List[confloat(ge=0)]
     buffer: confloat(gt=1)
     opt_range: conint(gt=1)
     opt_freq: conint(gt=1)
@@ -86,6 +86,10 @@ class GetWeightFn:
                         qt_steps / qt_length).round()
         state = make_time_window(data[['state']], ['state'], steps=chain_length, dropna=False)
 
+        state = (state * \
+                 np.power(qt_steps+1, np.arange(chain_length)[::-1])) \
+                    .sum(axis=1, skipna=False)
+
         weight = pd.DataFrame(index=data.index)
         weight['weight'] = 0.0
 
@@ -97,9 +101,11 @@ class GetWeightFn:
 
             st = state.loc[sel]
             window = data.loc[sel]
+
+            st_sel = st == st.iloc[-1]
             
-            st_sel_start = window.index[(st == st.iloc[-1]).all(axis=1)]
-            st_sel_end = window.index.shift(forward_length)[(st == st.iloc[-1]).all(axis=1)]
+            st_sel_start = window.index[st_sel]
+            st_sel_end = window.index.shift(forward_length)[st_sel]
 
             w_sel = pd.Series(np.full(len(window), False), index=window.index)
 
@@ -109,12 +115,16 @@ class GetWeightFn:
             window = window.loc[w_sel]
             ret = window['ret']
 
-            w = maximize_return_points(
+            w = maximize_return_points_vt(
                 ret,
+                rng=np.arange(0, 1.00001, 0.1),
                 fee=self.fee * fee_adj,
                 prev=prev_w
             )
-            weight.loc[idx] = w
+            weight.loc[idx, 'weight'] = w
+            weight.loc[idx, 'ret_avg'] = ret.mean()
+            weight.loc[idx, 'ret_count'] = len(ret)
+            weight.loc[idx, 'last_st'] = st.iloc[-1]
             prev_w = w
 
         data = data.join(weight)
@@ -231,9 +241,12 @@ class QuantizedQuantileStateMaximization(RebalanceSignal):
                  save=False):
         now = now or current_datetime()
         date = self.state['params'].get('date')
+
+        logger.info(f'now: {now}')
+        logger.info(f"params: {self.state['params']}")
         
         if not force and date and \
-            (now <= date + self.config.opt_freq * self.config.trade_freq):
+            (now < date + self.config.opt_freq * self.config.trade_freq):
             return
         
         logger.info(f'Params expired or not exists, starting optimization')
@@ -245,12 +258,14 @@ class QuantizedQuantileStateMaximization(RebalanceSignal):
         self.state['params'] = {
             'date': now,
             '_expected_expire': now + self.config.opt_freq * self.config.trade_freq,
+            '_kline_start': data.index[0],
+            '_kline_last': data.index[-1],
+            '_kline_count': len(data),
             **params
         }
         if self.config.save_opt_results:
             self.state['opt_results'] = {
                 'date': now,
-                '_expected_expire': self.state['params']['_expected_expire'],
                 'results': results
             }
         
@@ -289,6 +304,9 @@ class QuantizedQuantileStateMaximization(RebalanceSignal):
 
         self.state['state'] = dict(time=now,
                                    initial_frac=initial_frac,
+                                   kline_start=data.index[0],
+                                   kline_last=data.index[-1],
+                                   kline_count=len(data),
                                    fraction=fraction,
                                    last={'opentime': last_idx,
                                          **last.to_dict()})
@@ -296,11 +314,11 @@ class QuantizedQuantileStateMaximization(RebalanceSignal):
         return fraction
     
 
-    # def post_tick(self, now: datetime):
-    #     self.optimize(
-    #         self.strategy.get_klines(self.config.opt_range),
-    #         self.strategy.trading_fee,
-    #         now
-    #     )
+    def post_tick(self, now: datetime):
+        self.optimize(
+            self.strategy.get_klines(self.config.opt_range),
+            self.strategy.trading_fee,
+            now
+        )
 
 
