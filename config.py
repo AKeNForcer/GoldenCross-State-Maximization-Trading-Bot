@@ -1,10 +1,10 @@
 import os
 from dotenv import load_dotenv
 import pandas as pd
+import numpy as np
 import ccxt
 import pymongo
 from pymongo.server_api import ServerApi
-from src.core.timeframe import tf_to_resample
 
 
 
@@ -24,27 +24,30 @@ API_PASS = os.environ.get('API_PASS')
 
 SYMBOL = 'BTC/USDT'
 
-TIMEFRAME = '1m'
-TICK_SCHEDULE = { 'second': 0 }
 
-# TIMEFRAME = '1d'
-# TICK_SCHEDULE = { 'hour': 0, 'minute': 0, 'second': 0 }
+TIMEFRAME = '1d'
+TICK_SCHEDULE = { 'hour': 0, 'minute': 0, 'second': 0 }
 
 
 
 
 INDICATOR_CONFIG = {
-    'trade_freq': pd.to_timedelta(tf_to_resample(TIMEFRAME)),
-    'state_target': ['close'],
-    'lookback': [90],
-    'qt_length': [90],
-    'qt_steps': [3, 5],
-    'chain_length': [7],
-    'forward_length': [3],
-    'fee_adj': [1.5, 2, 2.5],
-    'opt_range': 365,
-    'opt_freq': 61,
+    'config': {
+        'trade_freq': pd.to_timedelta(TIMEFRAME),
+        'lookback': list(np.arange(115, 126, 1)),
+        'forward_length': [1],
+        'fee_adj': [1],
+        'opt_range': 365+152,
+        'opt_freq': 91,
+        'optimize_ref_date': pd.to_datetime('2023-01-01')
+    },
+    'kline_state_config': {
+        'state_target': ['close'],
+        'ema_fast_length': [12],
+        'ema_slow_length': [26],
+    }
 }
+
 
 if DB_CONN:
     mongo_client = pymongo.MongoClient(DB_CONN, server_api=ServerApi('1'))
