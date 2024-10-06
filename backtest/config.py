@@ -3,7 +3,6 @@ import pandas as pd
 import ccxt
 import pymongo
 from pymongo.server_api import ServerApi
-from src.core.timeframe import tf_to_resample
 from .ccxt import getMockCcxt
 
 load_dotenv()
@@ -11,7 +10,7 @@ test_variables = dotenv_values('.env.test')
 
 
 
-test_i = 1
+test_i = 2
 
 test_name = f'test-qqsm-{test_i}'
 DB_NAME = f"{test_variables.get('DB_NAME')}-qqsm-{test_i}"
@@ -50,23 +49,13 @@ TIMEFRAME = '1d'
 INDICATOR_CONFIG = {
     'config': {
         'trade_freq': pd.to_timedelta(TIMEFRAME),
-        'lookback': [90],
+        'lookback': [60, 75, 90],
         'forward_length': [3],
-        'fee_adj': [1],
+        'fee_adj': [1, 1.25, 1.5],
         'offset': [1],
         'opt_range': 190 + 182,
         'opt_freq': 91,
-        'optimize': False
     },
-    # 'config': {
-    #     'trade_freq': pd.to_timedelta(TIMEFRAME),
-    #     'lookback': [60, 75, 90],
-    #     'forward_length': [3],
-    #     'fee_adj': [1, 1.25, 1.5],
-    #     'offset': [1],
-    #     'opt_range': 190 + 182,
-    #     'opt_freq': 91,
-    # },
     'kline_state_config': {
         'state_target': ['close'],
         'qt_length': [90],
