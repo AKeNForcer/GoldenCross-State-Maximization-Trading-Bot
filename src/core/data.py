@@ -88,6 +88,9 @@ class DataBroker(Syncronizable):
                      f'{limit_=} '
                      f'{start_=} ')
 
+        if limit_ < 1:
+            raise ValueError(f"{limit_=} must >= 1")
+
         if limit_ > self.max_length:
             raise ValueError(f"{limit_=} must <= {self.max_length=}")
 
