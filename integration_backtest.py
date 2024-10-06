@@ -1,4 +1,3 @@
-from unittest import TestCase
 from unittest.mock import patch
 from backtest.config import *
 from backtest.controller import MockController
@@ -14,6 +13,7 @@ from traceback import format_exc
 if __name__ == '__main__':
     with patch('src.core.time.mockable_current_datetime') as mock_current_datetime:
         mock_current_datetime.return_value = (start_date - pd.to_timedelta(TIMEFRAME)).to_pydatetime()
+        logger.info(f'##### current datetime: {mock_current_datetime.return_value}')
 
         if mongo_client:
             mongo_client.admin.command('ping')
@@ -22,7 +22,7 @@ if __name__ == '__main__':
             logger.info("Database connection OK")
         
         try:
-            signal = QuantizedQuantileStateMaximization(INDICATOR_CONFIG)
+            signal = QuantizedQuantileStateMaximization(**INDICATOR_CONFIG)
             strategy = RebalanceSingleStrategy(ex=ex,
                                                symbol=SYMBOL,
                                                timeframe=TIMEFRAME,
@@ -37,9 +37,9 @@ if __name__ == '__main__':
         for date in pd.date_range(start_date, end_date,
                                   freq=pd.to_timedelta(TIMEFRAME)):
             mock_current_datetime.return_value = date.to_pydatetime()
-            strategy.get_klines(1 if strategy.dt.cache is None else len(strategy.dt.cache))
+            logger.info(f'##### current datetime: {date}')
+            strategy.get_klines(max(len(strategy.dt.cache), 1))
             lastest_klines = strategy.dt.cache.iloc[-1]
-            logger.info(f'current datetime: {date}')
             ex.__tick__(lastest_klines['close'],
                         lastest_klines['high'],
                         lastest_klines['low'])

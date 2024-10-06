@@ -11,16 +11,16 @@ test_variables = dotenv_values('.env.test')
 
 
 
-test_i = 6
+test_i = 1
 
-test_name = f'test-{test_i}'
-DB_NAME = f"{test_variables.get('DB_NAME')}-{test_i}"
+test_name = f'test-qqsm-{test_i}'
+DB_NAME = f"{test_variables.get('DB_NAME')}-qqsm-{test_i}"
 start_date = pd.to_datetime('2019-01-01')
 end_date = pd.to_datetime('2023-01-01')
 
 
-# test_name = f'test-{test_i}-test'
-# DB_NAME = f"{test_variables.get('DB_NAME')}-{test_i}-test"
+# test_name = f'test-qqsm-{test_i}-test'
+# DB_NAME = f"{test_variables.get('DB_NAME')}-qqsm-{test_i}-test"
 # start_date = pd.to_datetime('2023-01-01')
 # end_date = pd.to_datetime('2024-10-01')
 
@@ -48,17 +48,33 @@ TIMEFRAME = '1d'
 
 
 INDICATOR_CONFIG = {
-    'trade_freq': pd.to_timedelta(TIMEFRAME),
-    'state_target': ['close'],
-    'lookback': [60, 75, 90],
-    'qt_length': [90],
-    'qt_steps': [3],
-    'chain_length': [7],
-    'forward_length': [3],
-    'fee_adj': [1, 1.25, 1.5],
-    'opt_range': 190 + 182,
-    'opt_freq': 91,
+    'config': {
+        'trade_freq': pd.to_timedelta(TIMEFRAME),
+        'lookback': [90],
+        'forward_length': [3],
+        'fee_adj': [1],
+        'offset': [1],
+        'opt_range': 190 + 182,
+        'opt_freq': 91,
+        'optimize': False
+    },
+    # 'config': {
+    #     'trade_freq': pd.to_timedelta(TIMEFRAME),
+    #     'lookback': [60, 75, 90],
+    #     'forward_length': [3],
+    #     'fee_adj': [1, 1.25, 1.5],
+    #     'offset': [1],
+    #     'opt_range': 190 + 182,
+    #     'opt_freq': 91,
+    # },
+    'kline_state_config': {
+        'state_target': ['close'],
+        'qt_length': [90],
+        'qt_steps': [3],
+        'chain_length': [7],
+    }
 }
+
 
 if DB_CONN:
     mongo_client = pymongo.MongoClient(DB_CONN, server_api=ServerApi('1'))
