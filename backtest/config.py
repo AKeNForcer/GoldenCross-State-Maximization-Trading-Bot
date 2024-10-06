@@ -11,7 +11,7 @@ test_variables = dotenv_values('.env.test')
 
 
 
-test_i = 1
+test_i = 2
 
 # test_i_name = f'{test_i}'
 # test_name = f'test-gcsm-{test_i_name}'
@@ -52,21 +52,12 @@ TIMEFRAME = '1d'
 INDICATOR_CONFIG = {
     'config': {
         'trade_freq': pd.to_timedelta(TIMEFRAME),
-        'lookback': [125],
+        'lookback': list(np.arange(115, 126, 1)),
         'forward_length': [1],
         'fee_adj': [1],
-        'opt_range': 365,
+        'opt_range': 365+152,
         'opt_freq': 91,
-        'optimize': False
     },
-    # 'config': {
-    #     'trade_freq': pd.to_timedelta(TIMEFRAME),
-    #     'lookback': list(np.arange(115, 126, 5)),
-    #     'forward_length': [1],
-    #     'fee_adj': list(np.arange(1, 1.51, 0.1)),
-    #     'opt_range': 365,
-    #     'opt_freq': 91,
-    # },
     'kline_state_config': {
         'state_target': ['close'],
         'ema_fast_length': [12],

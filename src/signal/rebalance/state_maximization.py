@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from pydantic import BaseModel, conint, confloat, Field
-from typing import List, Any
+from typing import List, Any, Callable
 import pandas as pd
 import numpy as np
 from itertools import product
@@ -12,6 +12,7 @@ from src.strategy.rebalance import RebalanceSingleStrategy
 from src.core.logger import logger
 from src.utils.backtest.runner import weight_trade_with_idx
 from src.utils.backtest.em_weight import maximize_return_points_vt
+from src.utils.backtest.backtest import handle_nan
 from src.core.time import current_datetime
 
 
@@ -48,7 +49,7 @@ class SmConfig(BaseModel):
     opt_range: conint(gt=1)
     opt_freq: conint(gt=1)
     optimize: bool = Field(default=True)
-    optimize_target: str = Field(default='Sharpe Ratio')
+    score_metric: Callable = Field(default=lambda x: handle_nan(x['Avg. Annual Return [%]']))
     save_opt_results: bool
 
 
@@ -93,7 +94,6 @@ class GetWeightFn:
                              i + 1 - offset]
 
             window = data.loc[sel]
-            print(window)
             st = window['state']
             last_st = st.iloc[-1]
             
@@ -108,7 +108,6 @@ class GetWeightFn:
 
             window = window.loc[w_sel]
             ret = window['ret']
-            print(window)
 
             w = maximize_return_points_vt(ret, fee=self.fee*fee_adj, prev=prev_w,
                                         rng=np.arange(0, 1.00001, 0.1))
@@ -261,7 +260,7 @@ class StateMaximization(RebalanceSignal):
         logger.info(f'Optimize klines from {data.index[0]} to {data.index[-1]}')
 
         results = self._mp_opt(data, fee)
-        params, _ = max(results, key=lambda x : -x[1][self.config.optimize_target])
+        params, _ = max(results, key=lambda x : self.config.score_metric(x[1]))
 
         self.state['params'] = {
             'date': now,
