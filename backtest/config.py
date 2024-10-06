@@ -1,5 +1,6 @@
 from dotenv import load_dotenv, dotenv_values
 import pandas as pd
+import numpy as np
 import ccxt
 import pymongo
 from pymongo.server_api import ServerApi
@@ -10,18 +11,20 @@ test_variables = dotenv_values('.env.test')
 
 
 
-test_i = 2
+test_i = 1
 
-test_name = f'test-qqsm-{test_i}'
-DB_NAME = f"{test_variables.get('DB_NAME')}-qqsm-{test_i}"
-start_date = pd.to_datetime('2019-01-01')
-end_date = pd.to_datetime('2023-01-01')
+# test_i_name = f'{test_i}'
+# test_name = f'test-gcsm-{test_i_name}'
+# DB_NAME = f"{test_variables.get('DB_NAME')}-gcsm-{test_i_name}"
+# start_date = pd.to_datetime('2019-01-01')
+# end_date = pd.to_datetime('2023-01-01')
 
 
-# test_name = f'test-qqsm-{test_i}-test'
-# DB_NAME = f"{test_variables.get('DB_NAME')}-qqsm-{test_i}-test"
-# start_date = pd.to_datetime('2023-01-01')
-# end_date = pd.to_datetime('2024-10-01')
+test_i_name = f'{test_i}-test'
+test_name = f'test-qqsm-{test_i}-test'
+DB_NAME = f"{test_variables.get('DB_NAME')}-qqsm-{test_i}-test"
+start_date = pd.to_datetime('2023-01-01')
+end_date = pd.to_datetime('2024-10-01')
 
 
 
@@ -49,18 +52,25 @@ TIMEFRAME = '1d'
 INDICATOR_CONFIG = {
     'config': {
         'trade_freq': pd.to_timedelta(TIMEFRAME),
-        'lookback': [60, 75, 90],
-        'forward_length': [3],
-        'fee_adj': [1, 1.25, 1.5],
-        'offset': [1],
-        'opt_range': 190 + 182,
+        'lookback': [125],
+        'forward_length': [1],
+        'fee_adj': [1],
+        'opt_range': 365,
         'opt_freq': 91,
+        'optimize': False
     },
+    # 'config': {
+    #     'trade_freq': pd.to_timedelta(TIMEFRAME),
+    #     'lookback': list(np.arange(115, 126, 5)),
+    #     'forward_length': [1],
+    #     'fee_adj': list(np.arange(1, 1.51, 0.1)),
+    #     'opt_range': 365,
+    #     'opt_freq': 91,
+    # },
     'kline_state_config': {
         'state_target': ['close'],
-        'qt_length': [90],
-        'qt_steps': [3],
-        'chain_length': [7],
+        'ema_fast_length': [12],
+        'ema_slow_length': [26],
     }
 }
 

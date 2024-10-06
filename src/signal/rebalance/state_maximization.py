@@ -48,6 +48,7 @@ class SmConfig(BaseModel):
     opt_range: conint(gt=1)
     opt_freq: conint(gt=1)
     optimize: bool = Field(default=True)
+    optimize_target: str = Field(default='Sharpe Ratio')
     save_opt_results: bool
 
 
@@ -92,6 +93,7 @@ class GetWeightFn:
                              i + 1 - offset]
 
             window = data.loc[sel]
+            print(window)
             st = window['state']
             last_st = st.iloc[-1]
             
@@ -100,14 +102,13 @@ class GetWeightFn:
             st_sel_start = window.index[st_sel]
             st_sel_end = window.index.shift(forward_length)[st_sel]
 
-            w_sel = pd.Series(np.full(len(window), False), index=window.index)
-
-            for start, end in zip(st_sel_start, st_sel_end):
-                w_sel[(w_sel.index >= start) & (w_sel.index < end)] = True
+            w_sel = np.logical_or.reduce([(window.index >= start) & (window.index < end) \
+                                        for start, end in zip(st_sel_start, st_sel_end)])
             
 
             window = window.loc[w_sel]
             ret = window['ret']
+            print(window)
 
             w = maximize_return_points_vt(ret, fee=self.fee*fee_adj, prev=prev_w,
                                         rng=np.arange(0, 1.00001, 0.1))
@@ -115,6 +116,9 @@ class GetWeightFn:
             weight.loc[idx, 'ret_avg'] = ret.mean()
             weight.loc[idx, 'ret_count'] = len(ret)
             weight.loc[idx, 'last_st'] = last_st
+            weight.loc[idx, 'w_kline_start'] = sel[0]
+            weight.loc[idx, 'w_kline_last'] = sel[-1]
+            weight.loc[idx, 'w_kline_count'] = len(sel)
             prev_w = w
 
         data = data.join(weight)
@@ -257,7 +261,7 @@ class StateMaximization(RebalanceSignal):
         logger.info(f'Optimize klines from {data.index[0]} to {data.index[-1]}')
 
         results = self._mp_opt(data, fee)
-        params, _ = max(results, key=lambda x : -x[1]['Sharpe Ratio'])
+        params, _ = max(results, key=lambda x : -x[1][self.config.optimize_target])
 
         self.state['params'] = {
             'date': now,
