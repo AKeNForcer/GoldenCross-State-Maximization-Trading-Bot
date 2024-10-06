@@ -1,0 +1,13 @@
+services:
+  bot:
+    build: .
+    volumes:
+      - ./config.py:/app/config.py
+    environment:
+      LIVE_TRADE: ${LIVE_TRADE}
+      API_KEY: ${API_KEY}
+      API_SECRET: ${API_SECRET}
+      API_PASS: ${API_PASS}
+      DB_CONN: ${DB_CONN}
+      DB_NAME: ${DB_NAME}
+

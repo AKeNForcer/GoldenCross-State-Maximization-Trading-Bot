@@ -11,7 +11,7 @@ from pymongo.server_api import ServerApi
 load_dotenv()
 
 
-LIVE_TRADE = False
+LIVE_TRADE = os.environ.get('LIVE_TRADE') in [True, 'true', 'True', 1]
 
 
 DB_CONN = os.environ.get('DB_CONN')
