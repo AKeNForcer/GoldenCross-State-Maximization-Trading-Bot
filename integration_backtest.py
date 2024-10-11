@@ -2,7 +2,7 @@ from unittest.mock import patch
 from backtest.config import *
 from backtest.controller import MockController
 from src.core.logger import logger, MongoDBHandler
-from src.signal.rebalance.gcsm import GoldenCrossStateMaximization
+from src.signal.rebalance.golden_cross import GoldenCross
 from src.strategy.rebalance import RebalanceSingleStrategy
 from src.core.db import State
 from traceback import format_exc
@@ -22,7 +22,7 @@ if __name__ == '__main__':
             logger.info("Database connection OK")
         
         try:
-            signal = GoldenCrossStateMaximization(**INDICATOR_CONFIG)
+            signal = GoldenCross(**INDICATOR_CONFIG)
             strategy = RebalanceSingleStrategy(ex=ex,
                                                symbol=SYMBOL,
                                                timeframe=TIMEFRAME,
