@@ -94,7 +94,7 @@ def getMockCcxt(exchangeType: type[ccxt.okx],
             closed_orders = []
 
             # Fetch open orders from MongoDB
-            open_orders = list(self.orders_collection.find({'status': 'open'}))
+            open_orders = list(self.orders_collection.find({'status': 'open'}, {'_id': 0}))
 
             for order in open_orders:
                 if order['type'] == 'market':
