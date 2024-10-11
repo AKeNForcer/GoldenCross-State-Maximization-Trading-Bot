@@ -57,6 +57,7 @@ INDICATOR_CONFIG = {
         'fee_adj': [1],
         'opt_range': 365+152,
         'opt_freq': 91,
+        'optimize_ref_date': pd.to_datetime('2023-01-01')
     },
     'kline_state_config': {
         'state_target': ['close'],

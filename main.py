@@ -3,8 +3,7 @@ from src.core.controller import Controller
 from src.core.logger import logger, MongoDBHandler
 from src.core.db import State
 from src.strategy.rebalance import RebalanceSingleStrategy
-from src.signal.rebalance.golden_cross import GoldenCross
-from src.signal.rebalance.qqsm import QuantizedQuantileStateMaximization
+from src.signal.rebalance.gcsm import GoldenCrossStateMaximization
 from traceback import format_exc
 
 
@@ -20,13 +19,12 @@ def main():
         logger.info("Database connection OK")
 
     try:
-        signal = QuantizedQuantileStateMaximization(INDICATOR_CONFIG)
-        # signal = GoldenCross(INDICATOR_CONFIG)
+        signal = GoldenCrossStateMaximization(**INDICATOR_CONFIG)
         strategy = RebalanceSingleStrategy(ex=ex,
-                                        symbol=SYMBOL,
-                                        timeframe=TIMEFRAME,
-                                        fraction=signal,
-                                        live=LIVE_TRADE)
+                                           symbol=SYMBOL,
+                                           timeframe=TIMEFRAME,
+                                           fraction=signal,
+                                           live=LIVE_TRADE)
         state = State(db)
         controller = Controller(TICK_SCHEDULE,
                                 { 'strategy': strategy },

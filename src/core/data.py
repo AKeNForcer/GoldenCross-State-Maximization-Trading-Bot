@@ -26,6 +26,11 @@ class DataBroker(Syncronizable):
     def set_max_length(self, max_length: int):
         self.max_length = int(max_length)
     
+    def round_down(self, dt):
+        return pd.to_datetime(0) + \
+            int(dt.timestamp() / self.tfdelta.total_seconds()) * \
+            self.tfdelta
+    
     def _get_params(self, 
                     limit: int | None,
                     start: datetime | None,
@@ -46,6 +51,8 @@ class DataBroker(Syncronizable):
 
         if start is None and end is not None and limit is not None:
             start = end - limit * self.tfdelta
+            if not self.include_open:
+                start = self.round_down(start)
         
         if limit is None and start is not None and end is not None:
             limit = int((end - start) / self.tfdelta)
@@ -55,6 +62,8 @@ class DataBroker(Syncronizable):
         
         if start is None:
             start = (current_datetime() if end is None else end) - limit * self.tfdelta
+            if not self.include_open:
+                start = self.round_down(start)
 
         return start, limit
 

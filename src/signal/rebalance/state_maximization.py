@@ -50,6 +50,7 @@ class SmConfig(BaseModel):
     opt_freq: conint(gt=1)
     optimize: bool = Field(default=True)
     score_metric: Callable = Field(default=lambda x: handle_nan(x['Avg. Annual Return [%]']))
+    optimize_ref_date: datetime | None = Field(default=None)
     save_opt_results: bool
 
 
@@ -185,10 +186,17 @@ class StateMaximization(RebalanceSignal):
                 **{ k: v[0] for k, v in self.kline_state_config.items() }
             }
         else:
+            td = (self.config.opt_freq * pd.to_timedelta(f'1day'))
+            now = current_datetime()
+            if self.config.optimize_ref_date:
+                now = self.config.optimize_ref_date + \
+                    int((now - self.config.optimize_ref_date) / td) * td
             self.optimize(
-                self.strategy.get_klines(self.config.opt_range),
+                self.strategy.get_klines(self.config.opt_range, now=now),
                 self.strategy.trading_fee,
-                save=True
+                now=now,
+                save=True,
+                idle_verbose=True
             )
 
 
@@ -247,13 +255,15 @@ class StateMaximization(RebalanceSignal):
 
     def optimize(self, data: pd.DataFrame, fee: float,
                  now: datetime | None=None, force=False,
-                 save=False):
+                 save=False, idle_verbose=False):
 
         now = now or current_datetime()
         date = self.state['params'].get('date')
         
         if not force and date and \
             (now < date + self.config.opt_freq * self.config.trade_freq):
+            if idle_verbose:
+                logger.info(f"Current params: {self.state['params']}")
             return
         
         logger.info(f'Params expired or not exists, starting optimization')
@@ -286,9 +296,11 @@ class StateMaximization(RebalanceSignal):
     # ===== Signal part =====
 
     def tick(self, now: datetime, data: pd.DataFrame) -> float:
-        initial_frac = \
-            self.strategy.base_bal * self.strategy.last_price \
-            / self.strategy.equity
+        initial_frac = 0
+        if self.strategy.equity > 0:
+            initial_frac = \
+                self.strategy.base_bal * self.strategy.last_price \
+                / self.strategy.equity
         
         params = self.state['params']
 
