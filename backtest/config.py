@@ -11,20 +11,21 @@ test_variables = dotenv_values('.env.test')
 
 
 
-test_i = 2
+test_i = 1
+strategy_name = 'gc'
 
-# test_i_name = f'{test_i}'
-# test_name = f'test-gcsm-{test_i_name}'
-# DB_NAME = f"{test_variables.get('DB_NAME')}-gcsm-{test_i_name}"
-# start_date = pd.to_datetime('2019-01-01')
-# end_date = pd.to_datetime('2023-01-01')
+test_i_name = f'{test_i}'
+test_name = f'test-{strategy_name}-{test_i_name}'
+DB_NAME = f"{test_variables.get('DB_NAME')}-{strategy_name}-{test_i_name}"
+start_date = pd.to_datetime('2019-01-01')
+end_date = pd.to_datetime('2023-01-01')
 
 
-test_i_name = f'{test_i}-test'
-test_name = f'test-qqsm-{test_i}-test'
-DB_NAME = f"{test_variables.get('DB_NAME')}-qqsm-{test_i}-test"
-start_date = pd.to_datetime('2023-01-01')
-end_date = pd.to_datetime('2024-10-01')
+# test_i_name = f'{test_i}-test'
+# test_name = f'test-{strategy_name}-{test_i}-test'
+# DB_NAME = f"{test_variables.get('DB_NAME')}-{strategy_name}-{test_i}-test"
+# start_date = pd.to_datetime('2023-01-01')
+# end_date = pd.to_datetime('2024-10-01')
 
 
 
@@ -51,18 +52,8 @@ TIMEFRAME = '1d'
 
 INDICATOR_CONFIG = {
     'config': {
-        'trade_freq': pd.to_timedelta(TIMEFRAME),
-        'lookback': list(np.arange(115, 126, 1)),
-        'forward_length': [1],
-        'fee_adj': [1],
-        'opt_range': 365+152,
-        'opt_freq': 91,
-        'optimize_ref_date': pd.to_datetime('2023-01-01')
-    },
-    'kline_state_config': {
-        'state_target': ['close'],
-        'ema_fast_length': [12],
-        'ema_slow_length': [26],
+        'trade_freq': TIMEFRAME,
+        'period': [12, 26]
     }
 }
 
