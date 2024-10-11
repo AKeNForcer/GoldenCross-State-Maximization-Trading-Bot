@@ -139,8 +139,9 @@ class RebalanceSingleStrategy(BaseStrategy):
         return self.dt.get(1)
     
 
-    def get_klines(self, limit=None):
-        return self.dt.get(last=current_datetime() - self.tfdelta, limit=limit)
+    def get_klines(self, limit=None, now=None):
+        return self.dt.get(last=(now or current_datetime()) - self.tfdelta,
+                           limit=limit)
 
 
     def tick(self, now: datetime):
