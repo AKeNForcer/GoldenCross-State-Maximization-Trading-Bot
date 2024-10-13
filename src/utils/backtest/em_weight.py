@@ -19,7 +19,9 @@ def samples_pdf(samples, bin_width, transform=None):
     return pdf
 
 
-def maximize_return_points_vt(ret, rng=np.arange(0, 1.01, 0.01), fee=0, default=0.5, prev=None):
+def maximize_return_points_vt(ret, rng=np.arange(0, 1.01, 0.01),
+                              patial_entry_fee=0, patial_exit_fee=0,
+                              exit_fee=0, default=0.5, prev=None):
     if not prev:
         prev = 0
     
@@ -31,21 +33,36 @@ def maximize_return_points_vt(ret, rng=np.arange(0, 1.01, 0.01), fee=0, default=
     frac = np.repeat([rng], len(ret), axis=0).T
     ret = np.repeat([ret], len(rng), axis=0)
 
-    score = (np.log(ret * frac + 1 - np.abs((ret + 2) * (frac - prev) * fee))).mean(axis=1)
-
+    # capital gain
+    # (ret * frac + 1)
+    # entry fee
+    # - abs(((1 + ret) * (frac - prev) * entry_fee)
+    # exit fee
+    # - abs(((1            ) * (frac - prev) * exit_fee)
+    score = np.log((ret * frac + 1) - \
+                    (np.abs(frac - prev) * patial_entry_fee) - \
+                    ((1 + ret) * np.abs(frac - prev) * patial_exit_fee) - \
+                    (np.abs(frac) * exit_fee)
+                    ).mean(axis=1)
+    
     return rng[score.argmax()]
 
 
 
-def maximize_return_points(ret, bound=(0.0, 1.0), fee=0, prev=None):
+def maximize_return_points(ret, bound=(0.0, 1.0),
+                           patial_entry_fee=0, patial_exit_fee=0,
+                           exit_fee=0, default=0.5, prev=None):
     if prev is None:
         prev = 0
 
     def objfn(fraction):
-        return -(np.log(ret * fraction + 1 - np.abs((ret + 2) * (fraction - prev) * fee))).mean()
-        # return -(np.log(ret * fraction + 1 - np.abs((ret + 2) * fraction * fee))).mean()
+        return -(np.log((ret * fraction + 1) - \
+                        (np.abs(fraction - prev) * patial_entry_fee) - \
+                            ((1 + ret) * np.abs(fraction - prev) * patial_exit_fee) - \
+                                (np.abs(fraction) * exit_fee))
+                                ).mean()
 
-    result = minimize(objfn, x0=[0.5], bounds=[bound])
+    result = minimize(objfn, x0=[default], bounds=[bound])
 
     return result.x[0]
 
