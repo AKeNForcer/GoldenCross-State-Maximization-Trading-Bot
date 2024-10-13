@@ -110,8 +110,12 @@ class GetWeightFn:
             window = window.loc[w_sel]
             ret = window['ret']
 
-            w = maximize_return_points_vt(ret, fee=self.fee*fee_adj, prev=prev_w,
-                                        rng=np.arange(0, 1.00001, 0.1))
+            w = maximize_return_points_vt(ret,
+                                          patial_entry_fee=self.fee*fee_adj,
+                                          patial_exit_fee=self.fee*fee_adj,
+                                          prev=prev_w,
+                                          rng=np.arange(0, 1.00001, 0.1))
+
             weight.loc[idx, 'weight'] = w
             weight.loc[idx, 'ret_avg'] = ret.mean()
             weight.loc[idx, 'ret_count'] = len(ret)

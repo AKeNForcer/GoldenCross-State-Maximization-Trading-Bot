@@ -22,6 +22,7 @@ class DataBroker(Syncronizable):
         self.cache = self._to_df()
         self.include_open = include_open
         self.set_max_length(max_length)
+        self._start_limit = None
     
     def set_max_length(self, max_length: int):
         self.max_length = int(max_length)
@@ -107,16 +108,19 @@ class DataBroker(Syncronizable):
             start_ + self.tfdelta > current_datetime()):
             raise ValueError(f'{start_ = } cannot be future')
 
+        if self._start_limit and start_ < self._start_limit:
+            logger.warning(f'data | update start__ due to {start_=} < {self._start_limit=}')
+            end_ = start_ + limit_ * self.tfdelta
+            start_  = self._start_limit
+            limit_ = int((end_ - start_) / self.tfdelta)
+            logger.warning(f'data | updated {start_=} {limit_=}')
+
         start__, limit__ = start_, limit_
 
         if (len(self.cache) > 0 and \
             self.cache.index[0] <= start__):
             limit__ = limit__ - len(self.cache.loc[start__:].iloc[:limit])
             start__ = np.max([self.cache.index[-1] + self.cache.index.freq, start__])
-            # self.cache.index[0] <= start__ and \:
-            # self.cache.index[-1] >= start__ + (limit - 1) * self.tfdelta):
-            # _cache = self.cache.loc[start__:].iloc[:limit]
-            # self.cache = self.cache.loc[self.cache.index <= _cache.index[-1]]
         else:
             self.cache = self._to_df()
             logger.debug(f'data | reset cache')
@@ -129,15 +133,15 @@ class DataBroker(Syncronizable):
 
         while limit__ > 0:
             _df = self.ex.fetch_ohlcv(self.symbol, self.timeframe,
-                                     since=int(start__.timestamp() * 1000),
-                                     limit=limit__)
+                                      since=int(start__.timestamp() * 1000),
+                                      limit=limit__)
             _df = self._to_df(_df)
-            # print((f'start__={start__} limit__={limit__}', flush=True)
-            # print((f'i0={_df.index[0]} i1={_df.index[1]}', flush=True)
+
             if len(_df) > 0:
                 logger.debug(f'data | klines updated from: {_df.index[0]} to: {_df.index[-1]} ({limit__})')
             else:
-                logger.warning(f'data | no klines updated ({limit__})')
+                self._start_limit = df.index[0]
+                logger.warning(f'data | no klines updated ({limit__}) {self._start_limit=}')
                 break
 
             df = pd.concat([_df, df])
