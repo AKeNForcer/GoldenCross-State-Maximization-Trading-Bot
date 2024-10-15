@@ -59,7 +59,7 @@ To run the integration backtest:
 
 ## 5. Live Trading
 
-### To run the bot in live trading mode:
+### To run the bot manually:
 
 1. Create a `.env` file using the `.env.example` as a reference.
 2. Edit `config.py` to set up your live trading configurations.
@@ -68,7 +68,7 @@ To run the integration backtest:
     python main.py
     ```
 
-### To live trade using Docker:
+### To run the bot using Docker:
 
 1. Create a `.env` file using the `.env.example` as a reference.
 2. Build and run the Docker containers:
