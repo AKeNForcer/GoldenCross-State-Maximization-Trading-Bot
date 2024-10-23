@@ -33,18 +33,8 @@ TICK_SCHEDULE = { 'hour': 0, 'minute': 0, 'second': 0 }
 
 INDICATOR_CONFIG = {
     'config': {
-        'trade_freq': pd.to_timedelta(TIMEFRAME),
-        'lookback': list(np.arange(115, 126, 1)),
-        'forward_length': [1],
-        'fee_adj': [1],
-        'opt_range': 365+152,
-        'opt_freq': 91,
-        'optimize_ref_date': pd.to_datetime('2023-01-01')
-    },
-    'kline_state_config': {
-        'state_target': ['close'],
-        'ema_fast_length': [12],
-        'ema_slow_length': [26],
+        'trade_freq': TIMEFRAME,
+        'period': [12, 26]
     }
 }
 
