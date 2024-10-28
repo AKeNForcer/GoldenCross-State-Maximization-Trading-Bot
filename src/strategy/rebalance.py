@@ -21,7 +21,8 @@ class RebalanceSingleStrategy(BaseStrategy):
                  timeframe: str,
                  fraction: RebalanceSignal | float,
                  name: str = 'rebalance-single',
-                 live: bool = False):
+                 live: bool = False,
+                 pre_fetch=True):
         super().__init__(ex, name)
         self.live = live
         self.dt = DataBroker(ex, symbol, timeframe)
@@ -37,6 +38,9 @@ class RebalanceSingleStrategy(BaseStrategy):
         self.tfdelta = pd.to_timedelta(self.timeframe)
 
         self.fraction = fraction
+
+        if pre_fetch:
+            self.fetch_klines()
 
         logger.info(f'live trade: {self.live}')
         logger.info(f'symbol: {self.symbol}')
@@ -135,6 +139,14 @@ class RebalanceSingleStrategy(BaseStrategy):
         return response
 
 
+    def fetch_klines(self):
+        limit = self.fraction.get_length()
+        if type(limit) != int:
+            limit = int(limit / self.tfdelta)
+
+        self.data = self.dt.get_klines(limit=limit)
+
+
     def tick(self, now: datetime):
         if type(self.fraction) in [float, int]:
             self.data = self.dt.get_current_kline()
@@ -143,11 +155,7 @@ class RebalanceSingleStrategy(BaseStrategy):
             self._rebalance(now, self.fraction, self.last_price)
             return
 
-        limit = self.fraction.get_length()
-        if type(limit) != int:
-            limit = int(limit / self.tfdelta)
-
-        self.data = self.dt.get_klines(limit=limit)
+        self.fetch_klines()
         self._fetch_account_balance()
 
         frac = self.fraction.tick(now, self.data)
