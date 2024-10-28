@@ -135,18 +135,9 @@ class RebalanceSingleStrategy(BaseStrategy):
         return response
 
 
-    def get_current_kline(self):
-        return self.dt.get(1)
-    
-
-    def get_klines(self, limit=None, now=None):
-        return self.dt.get(last=(now or current_datetime()) - self.tfdelta,
-                           limit=limit)
-
-
     def tick(self, now: datetime):
         if type(self.fraction) in [float, int]:
-            self.data = self.get_current_kline()
+            self.data = self.dt.get_current_kline()
             self._fetch_account_balance()
 
             self._rebalance(now, self.fraction, self.last_price)
@@ -156,7 +147,7 @@ class RebalanceSingleStrategy(BaseStrategy):
         if type(limit) != int:
             limit = int(limit / self.tfdelta)
 
-        self.data = self.get_klines(limit=limit)
+        self.data = self.dt.get_klines(limit=limit)
         self._fetch_account_balance()
 
         frac = self.fraction.tick(now, self.data)

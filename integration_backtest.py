@@ -38,7 +38,7 @@ if __name__ == '__main__':
                                   freq=pd.to_timedelta(TIMEFRAME)):
             mock_current_datetime.return_value = date.to_pydatetime()
             logger.info(f'##### current datetime: {date}')
-            strategy.get_klines(max(len(strategy.dt.cache), 1))
+            strategy.dt.get_klines(max(len(strategy.dt.cache), 1))
             lastest_klines = strategy.dt.cache.iloc[-1]
             ex.__tick__(lastest_klines['close'],
                         lastest_klines['high'],
