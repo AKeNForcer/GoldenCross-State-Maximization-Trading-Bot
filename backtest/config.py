@@ -12,19 +12,20 @@ test_variables = dotenv_values('.env.test')
 
 
 test_i = 2
+strategy_name = 'gcsm'
 
-# test_i_name = f'{test_i}'
-# test_name = f'test-gcsm-{test_i_name}'
-# DB_NAME = f"{test_variables.get('DB_NAME')}-gcsm-{test_i_name}"
-# start_date = pd.to_datetime('2019-01-01')
-# end_date = pd.to_datetime('2023-01-01')
+test_i_name = f'{test_i}'
+test_name = f'test-{strategy_name}-{test_i_name}'
+DB_NAME = f"{test_variables.get('DB_NAME')}-{strategy_name}-{test_i_name}"
+start_date = pd.to_datetime('2019-01-01')
+end_date = pd.to_datetime('2023-01-01')
 
 
-test_i_name = f'{test_i}-test'
-test_name = f'test-qqsm-{test_i}-test'
-DB_NAME = f"{test_variables.get('DB_NAME')}-qqsm-{test_i}-test"
-start_date = pd.to_datetime('2023-01-01')
-end_date = pd.to_datetime('2024-10-01')
+# test_i_name = f'{test_i}-test'
+# test_name = f'test-{strategy_name}-{test_i}-test'
+# DB_NAME = f"{test_variables.get('DB_NAME')}-{strategy_name}-{test_i}-test"
+# start_date = pd.to_datetime('2023-01-01')
+# end_date = pd.to_datetime('2024-10-01')
 
 
 

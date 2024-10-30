@@ -156,6 +156,14 @@ class DataBroker(Syncronizable):
 
 
 
+    def get_current_kline(self):
+        return self.get(1)
+    
+
+    def get_klines(self, limit=None, now=None):
+        return self.get(last=(now or current_datetime()) - self.tfdelta,
+                        limit=limit)
+
 
 
 

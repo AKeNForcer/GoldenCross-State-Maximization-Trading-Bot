@@ -5,6 +5,8 @@ from src.core.db import State, StateInjectable
 from src.core.time import current_datetime
 from datetime import datetime
 from time import sleep
+import os
+from threading import Thread
 
 
 class Syncronizable(StateInjectable):
@@ -29,7 +31,8 @@ class SyncFn(Syncronizable):
 class Controller:
     def __init__(self, schedule: dict,
                  modules: dict[str, Syncronizable],
-                 state: State | None = None):
+                 state: State | None = None,
+                 no_watch=None):
         if type(modules) != dict:
             self.modules = { 'module': modules }
         else:
@@ -38,6 +41,11 @@ class Controller:
         self.scheduler = BlockingScheduler()
         self.scheduler.add_job(self.tick, 'cron', **schedule)
         self.state = state
+        self.no_watch = no_watch if no_watch is not None else \
+            os.environ.get('NO_WATCH') in [True, 'true', 'True', '1', 1]
+
+        if self.no_watch:
+            logger.info('no_watch mode: Tasks will run once and exit.')
 
         if state:
             for name, module in self.modules.items():
@@ -66,12 +74,18 @@ class Controller:
             if self.state:
                 self.state.save(now)
             logger.info('==================== state saved ====================')
+        
+        if self.no_watch:
+            logger.info('no_watch mode: Stopping tasks...')
+            th = Thread(target=self.scheduler.shutdown)
+            th.start()
     
     def start(self):
         try:
-            for i in range(10):
-                logger.info(f'Starting in {10 - i} seconds')
-                sleep(1)
+            if not self.no_watch:
+                for i in range(10):
+                    logger.info(f'Starting in {10 - i} seconds')
+                    sleep(1)
             logger.info('==================== start running ====================')
             self.scheduler.start()
         except Exception as e:
