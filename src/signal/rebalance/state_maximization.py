@@ -196,7 +196,7 @@ class StateMaximization(RebalanceSignal):
                 now = self.config.optimize_ref_date + \
                     int((now - self.config.optimize_ref_date) / td) * td
             self.optimize(
-                self.strategy.get_klines(self.config.opt_range, now=now),
+                self.strategy.dt.get_klines(self.config.opt_range, now=now),
                 self.strategy.trading_fee,
                 now=now,
                 save=True,
@@ -339,7 +339,7 @@ class StateMaximization(RebalanceSignal):
         if not self.config.optimize:
             return
         self.optimize(
-            self.strategy.get_klines(self.config.opt_range),
+            self.strategy.dt.get_klines(self.config.opt_range),
             self.strategy.trading_fee,
             now
         )

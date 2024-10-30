@@ -16,7 +16,7 @@ class GoldenCross(RebalanceSignal):
             if self.period[i] >= self.period[i+1]:
                 raise ValueError(f'period values {self.period} should not be replicated')
         
-        config['buffer'] = config.get('buffer') or max(self.period) * 4
+        config['buffer'] = config.get('buffer') or max(self.period) * 10
         self.buffer = config['buffer']
 
         self.config = config
