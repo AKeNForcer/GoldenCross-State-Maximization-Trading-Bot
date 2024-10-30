@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    IMAGE_NAME: "bot-gc-btcusdt-1d"
+    IMAGE_NAME: "bot-gcsm-btcusdt-1d"
     IMAGE_TAG: "lastest"
 
 phases:
